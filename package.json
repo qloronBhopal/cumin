@@ -1,0 +1,43 @@
+{
+    "name": "lexusCumin-backend",
+    "version": "1.0.0",
+    "description": "",
+    "main": "src/",
+    "scripts": {
+        "start:prod": "node src/",
+        "start:dev": "nodemon src/"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "bcrypt": "^5.0.1",
+        "bcryptjs": "^2.4.3",
+        "body-parser": "^1.19.1",
+        "cli-color": "^2.0.1",
+        "cookie-parser": "^1.4.6",
+        "dotenv": "^10.0.0",
+        "ejs": "^3.1.6",
+        "express": "^4.17.2",
+        "express-fileupload": "^1.2.1",
+        "glob": "^7.2.0",
+        "jsonwebtoken": "^8.5.1",
+        "md5": "^2.3.0",
+        "mongoose": "^6.1.5",
+        "morgan": "^1.10.0",
+        "mysql2": "^2.3.3",
+        "pm2": "^5.1.2",
+        "request": "^2.88.2",
+        "sequelize": "^6.12.5",
+        "sequelize-auto": "^0.8.8",
+        "standard-error": "^1.1.0",
+        "uuid": "^8.3.2"
+    },
+    "devDependencies": {
+        "eslint": "^8.6.0",
+        "eslint-config-airbnb-base": "^15.0.0",
+        "eslint-plugin-import": "^2.25.4",
+        "nodemon": "^2.0.15",
+        "prettier": "^2.5.1"
+    }
+}

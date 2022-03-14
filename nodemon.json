@@ -1,0 +1,4 @@
+{
+  "ignore": ["yarn.lock", "package-lock.json", "node_modules", "*.md", ".eslintrc.json", "/.vscode", "allDbs.json"],
+  "ext": ".js, .json, .yaml"
+}
