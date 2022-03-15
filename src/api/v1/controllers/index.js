@@ -1,3 +1,4 @@
 module.exports = {
-  userControllers: require("./User.controllers")
+  userCtrl: require("./User.controllers"),
+  uploadCtrl: require("./uploadCtrl")
 };

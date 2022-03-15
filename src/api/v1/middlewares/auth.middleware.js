@@ -1,85 +1,53 @@
 const jwt = require("jsonwebtoken");
-const { secretKeyJwt, showDevLogsAndResponse } = require("../../../../config/appConfig");
-const { standardResponse } = require("../helpers");
-const User = require("../models/User.model");
+const Users = require("../models/User.model");
 
-const authmid = async (req, res, next) => {
+const auth = (req, res, next) => {
   try {
-    if (!req.headers.authorization) {
-      return standardResponse({
-        res,
-        isError: true,
-        message: "Auth Token Require",
-        responseStatusCode: 401,
-        errorCode: 401
-      });
-    }
-    const authheader = req.headers.authorization;
-    const bearertoken = authheader.split(" ");
-    const token = bearertoken[1];
+    const token = req.header("Authorization");
     if (!token) {
-      return standardResponse({
-        res,
-        isError: true,
-        message: "Auth token require",
-        responseStatusCode: 401,
-        errorCode: 401
+      return res.status(400).json({
+        msg: "Invalid Authentication."
       });
     }
-    jwt.verify(token, secretKeyJwt, (err, payload) => {
+
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, tokenData) => {
       if (err) {
-        return standardResponse({
-          res,
-          isError: true,
-          message: "You Dont Have access!",
-          responseStatusCode: 409,
-          errorCode: 409
+        return res.status(400).json({
+          msg: "Invalid Authentication."
         });
       }
-      req._id = payload.id;
-    });
-    const isread = await User.findOne({
-      _id: req._id
-    });
-    if (!isread) {
-      return standardResponse({
-        res,
-        isError: true,
-        message: "user not found",
-        responseStatusCode: 404,
-        errorCode: 404
-      });
-    }
-    req.personal_email = isread.personal_email;
-    req.username = isread.username;
-    // req.prfilepic = isread.profilepic
 
-    const isupdate = await User.findOneAndUpdate(
-      {
-        _id: req._id
-      },
-      {
-        last_active: new Date()
-      },
-      {
-        new: true
-      }
-    );
-    if (!isupdate) {
-      return standardResponse({
-        res,
-        isError: true,
-        message: "unable to update",
-        responseStatusCode: 500,
-        errorCode: 500
+      req.user = tokenData;
+      next();
+    });
+  } catch (err) {
+    return res.status(500).json({
+      msg: err.message
+    });
+  }
+};
+
+const authAdmin = async (req, res, next) => {
+  try {
+    const user = await Users.findOne({
+      _id: req.user.id
+    });
+
+    if (user.role !== 1) {
+      return res.status(500).json({
+        msg: "Admin resources access denied."
       });
     }
+
     next();
-  } catch (error) {
-    console.log(error.message);
+  } catch (err) {
+    return res.status(500).json({
+      msg: err.message
+    });
   }
 };
 
 module.exports = {
-  authmid
+  auth,
+  authAdmin
 };
