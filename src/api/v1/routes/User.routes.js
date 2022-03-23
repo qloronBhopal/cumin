@@ -4,7 +4,7 @@ const { auth, authAdmin, uploadImage } = require("../middlewares");
 
 router.post("/register", userCtrl.register);
 
-router.post("/activation", userCtrl.activateEmail);
+router.post("/activate", userCtrl.activateEmail);
 
 router.post("/login", userCtrl.login);
 
@@ -24,16 +24,18 @@ router.patch("/update", auth, userCtrl.updateUser);
 
 router.patch("/update_role/:id", auth, authAdmin, userCtrl.updateUsersRole);
 
-router.delete("/delete/:id", auth, authAdmin, userCtrl.deleteUser);
+router.post("/delete/:id", auth, authAdmin, userCtrl.deleteUser);
+
+router.post("/activeDelUser/:id", auth, authAdmin, userCtrl.activeDeletedUser);
 
 router.post("/upload_avatar", uploadImage, auth, uploadCtrl.uploadAvatar);
 
 // Social Login
-router.post("/google_login", userCtrl.googleLogin);
+
+// router.post("/google_login", userCtrl.googleLogin);
 
 // router.post('/facebook_login', userCtrl.facebookLogin);
 
 router.post("/userDeletionReason", auth, userCtrl.userDeletionReason);
 
-router.post("/userlist", userCtrl.user_list);
 module.exports = router;
