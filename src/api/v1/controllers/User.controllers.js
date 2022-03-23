@@ -18,7 +18,6 @@ const { standardResponse } = require("../helpers");
 const sendMail = require("./sendMail");
 
 const { OAuth2 } = google.auth;
-
 const client = new OAuth2(process.env.MAILING_SERVICE_CLIENT_ID);
 const { CLIENT_URL } = process.env;
 const errCatchResObjRetFn = (res, error) => {
@@ -40,28 +39,23 @@ const errCatchResObjRetFn = (res, error) => {
       };
   return resObj;
 };
-
 function validateEmail(email) {
   const re =
     /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
   return re.test(email);
 }
-
 const createActivationToken = (payload) =>
   jwt.sign(payload, process.env.ACTIVATION_TOKEN_SECRET, {
     expiresIn: "5m"
   });
-
 const createAccessToken = (payload) =>
   jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, {
     expiresIn: "15m"
   });
-
 const createRefreshToken = (payload) =>
   jwt.sign(payload, process.env.REFRESH_TOKEN_SECRET, {
     expiresIn: "7d"
   });
-
 const register = async (req, res) => {
   try {
     const { name, email, password, role, mobile_number, whatsapp_number, office_location, address, reporting_to } =
@@ -112,11 +106,10 @@ const register = async (req, res) => {
     const activation_token = createActivationToken(newUser);
 
     const url = `${CLIENT_URL}/user/activate/${activation_token}`;
-    // sendMail(email, url, "Verify your email address");
+    sendMail(email, url, "Verify your email address");
 
     res.json({
-      msg: "Register Success! Please activate your email to start.",
-      url
+      msg: "Register Success! Please activate your email to start."
     });
   } catch (err) {
     return res.status(500).json({
@@ -293,10 +286,20 @@ const getUserInfor = async (req, res) => {
   }
 };
 const getUsersAllInfor = async (req, res) => {
+  const { pageNo } = req.query;
+  const userIndex = (pageNo - 1) * 20;
   try {
-    const users = await User.find().select("-password");
-
-    res.json(users);
+    const count = await User.find().count();
+    if (userIndex > count) {
+      return res.json({
+        message: "No Data Available"
+      });
+    }
+    const users = await User.find().select("-password").limit(20).skip(userIndex);
+    res.json({
+      message: `Displaying Document ${userIndex + 1} - ${userIndex + users.length} of ${count} `,
+      users
+    });
   } catch (err) {
     return res.status(500).json({
       msg: err.message
@@ -363,10 +366,53 @@ const updateUsersRole = async (req, res) => {
 };
 const deleteUser = async (req, res) => {
   try {
-    await User.findByIdAndDelete(req.params.id);
+    const user = await User.findOne({
+      _id: req.params.id
+    });
+    if (user.status === 0) {
+      return res.json({
+        message: "user is already deactivate!"
+      });
+    }
+    await User.updateOne(
+      {
+        _id: req.params.id
+      },
+      {
+        status: 0
+      }
+    );
 
     res.json({
-      msg: "Deleted Success!"
+      msg: "User Deactivated!"
+    });
+  } catch (err) {
+    return res.status(500).json({
+      msg: err.message
+    });
+  }
+};
+const activeDeletedUser = async (req, res) => {
+  try {
+    const user = await User.findOne({
+      _id: req.params.id
+    });
+    if (user.status === 1) {
+      return res.json({
+        message: "user is already activate!"
+      });
+    }
+    await User.updateOne(
+      {
+        _id: req.params.id
+      },
+      {
+        status: 1
+      }
+    );
+
+    res.json({
+      msg: "User Activated!"
     });
   } catch (err) {
     return res.status(500).json({
@@ -497,7 +543,6 @@ const googleLogin = async (req, res) => {
 //         return res.status(500).json({msg: err.message})
 //     }
 // }
-
 const userDeletionReason = async (req, res) => {
   const message = [
     "Not working with Qloron anymore",
@@ -514,51 +559,6 @@ const userDeletionReason = async (req, res) => {
     successCode: 200
   });
 };
-
-const user_list = async (req, res) => {
-  const { pageNo } = req.query;
-  const user = await User.find(
-    {},
-    {
-      name: 1,
-      email: 1,
-      mobile_number: 1,
-      whatsapp_number: 1,
-      office_location: 1,
-      address: 1,
-      reporting_to: 1
-    }
-  )
-    .limit(20)
-    .skip((pageNo - 1) * 20);
-  if (user.length === 0) {
-    return standardResponse({
-      res,
-      isError: true,
-      message: "User Data Out Of Range!",
-      responseStatusCode: 416,
-      successCode: 204
-    });
-  }
-  try {
-    standardResponse({
-      res,
-      isError: false,
-      message: "Data Fetch Successfully!",
-      data: user,
-      responseStatusCode: 200,
-      successCode: 200
-    });
-  } catch (error) {
-    standardResponse({
-      ...errCatchResObjRetFn(res, error),
-      message: error.message,
-      responseStatusCode: 422,
-      errorCode: 409
-    });
-  }
-};
-
 module.exports = {
   register,
   activateEmail,
@@ -572,8 +572,8 @@ module.exports = {
   updateUser,
   updateUsersRole,
   deleteUser,
+  activeDeletedUser,
   googleLogin,
   // facebookLogin,
-  userDeletionReason,
-  user_list
+  userDeletionReason
 };
