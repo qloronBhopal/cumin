@@ -1,11 +1,11 @@
 {
-    "name": "lexusCumin-backend",
+    "name": "sortboxs",
     "version": "1.0.0",
     "description": "",
     "main": "src/",
     "scripts": {
-        "start:prod": "node src/",
-        "start:dev": "nodemon src/"
+        "start": "node src/",
+        "dev": "nodemon src/"
     },
     "keywords": [],
     "author": "",
