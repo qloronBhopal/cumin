@@ -30,18 +30,18 @@ const userSchema = mongoose.Schema(
     role: {
       type: Number,
       enum: {
-        values: [0, 1],
+        values: [0, 1, 2, 3], // 0-user, 1-panel_user, 2-admin, 3-super-admin
         message: "{VALUE} is not supported!"
       },
-      default: 0 // 0 = user, 1 = admin
+      default: 0
     },
     status: {
       type: Number,
-      enum: {
-        values: [0, 1],
-        message: "{VALUE} is not supported!"
+      Enum: {
+        values: [0, 1], // 0 = Inactive, 1 = Active
+        required: "{VALUE} is not supported!"
       },
-      default: 1 // 0 = Inactive, 1 = Active
+      default: 1
     },
     avatar: {
       type: String,
@@ -70,11 +70,29 @@ const userSchema = mongoose.Schema(
     },
     office_location: {
       type: Object,
+      values: {
+        branch: "",
+        type: ""
+      },
       required: false
     },
     address: {
-      type: String,
-      required: true
+      type: Object,
+      required: true,
+      values: {
+        house_no: "",
+        city: "",
+        state: "",
+        country: "",
+        address_completed: "",
+        pincode: {
+          type: "number"
+        },
+        address_type: {
+          type: Number,
+          enum: [0, 1] // 0-Office_Address, 1-Home_Address
+        }
+      }
     },
     reporting_to: {
       type: String,
