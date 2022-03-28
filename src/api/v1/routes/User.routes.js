@@ -36,6 +36,6 @@ router.post("/upload_avatar", uploadImage, auth, uploadCtrl.uploadAvatar);
 
 // router.post('/facebook_login', userCtrl.facebookLogin);
 
-router.post("/userDeletionReason", auth, userCtrl.userDeletionReason);
+router.post("/userDeletionReason", userCtrl.userDeletionReason);
 
 module.exports = router;

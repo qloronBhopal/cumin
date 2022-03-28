@@ -58,10 +58,20 @@ const createRefreshToken = (payload) =>
   });
 const register = async (req, res) => {
   try {
-    const { name, email, password, role, mobile_number, whatsapp_number, office_location, address, reporting_to } =
-      req.body;
+    const {
+      name,
+      email,
+      password,
+      confirmPassword,
+      role,
+      mobile_number,
+      whatsapp_number,
+      office_location,
+      address,
+      reporting_to
+    } = req.body;
 
-    if (!name || !email || !password || !mobile_number || !address) {
+    if (!name || !email || !password || !mobile_number || !address || !confirmPassword) {
       return res.status(400).json({
         msg: "Please fill in all fields."
       });
@@ -86,6 +96,11 @@ const register = async (req, res) => {
     if (password.length < 6) {
       return res.status(400).json({
         msg: "Password must be at least 6 characters."
+      });
+    }
+    if (password !== confirmPassword) {
+      return res.status(400).json({
+        msg: "Password does not match"
       });
     }
 
@@ -420,80 +435,80 @@ const activeDeletedUser = async (req, res) => {
     });
   }
 };
-const googleLogin = async (req, res) => {
-  try {
-    const { tokenId } = req.body;
+// const googleLogin = async (req, res) => {
+//   try {
+//     const { tokenId } = req.body;
 
-    const verify = await client.verifyIdToken({
-      idToken: tokenId,
-      audience: process.env.MAILING_SERVICE_CLIENT_ID
-    });
+//     const verify = await client.verifyIdToken({
+//       idToken: tokenId,
+//       audience: process.env.MAILING_SERVICE_CLIENT_ID
+//     });
 
-    const { email_verified, email, name, picture } = verify.payload;
+//     const { email_verified, email, name, picture } = verify.payload;
 
-    const password = email + process.env.GOOGLE_SECRET;
+//     const password = email + process.env.GOOGLE_SECRET;
 
-    const passwordHash = await bcrypt.hash(password, 12);
+//     const passwordHash = await bcrypt.hash(password, 12);
 
-    if (!email_verified) {
-      return res.status(400).json({
-        msg: "Email verification failed."
-      });
-    }
+//     if (!email_verified) {
+//       return res.status(400).json({
+//         msg: "Email verification failed."
+//       });
+//     }
 
-    const user = await User.findOne({
-      email
-    });
+//     const user = await User.findOne({
+//       email
+//     });
 
-    if (user) {
-      const isMatch = await bcrypt.compare(password, user.password);
-      if (!isMatch) {
-        return res.status(400).json({
-          msg: "Password is incorrect."
-        });
-      }
+//     if (user) {
+//       const isMatch = await bcrypt.compare(password, user.password);
+//       if (!isMatch) {
+//         return res.status(400).json({
+//           msg: "Password is incorrect."
+//         });
+//       }
 
-      const refresh_token = createRefreshToken({
-        id: user._id
-      });
-      res.cookie("refreshtoken", refresh_token, {
-        httpOnly: true,
-        path: "/api/v1/user/refresh_token",
-        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-      });
+//       const refresh_token = createRefreshToken({
+//         id: user._id
+//       });
+//       res.cookie("refreshtoken", refresh_token, {
+//         httpOnly: true,
+//         path: "/api/v1/user/refresh_token",
+//         maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+//       });
 
-      res.json({
-        msg: "Login success!"
-      });
-    } else {
-      const newUser = new User({
-        name,
-        email,
-        password: passwordHash,
-        avatar: picture
-      });
+//       res.json({
+//         msg: "Login success!"
+//       });
+//     } else {
+//       const newUser = new User({
+//         name,
+//         email,
+//         password: passwordHash,
+//         avatar: picture
+//       });
 
-      await newUser.save();
+//       await newUser.save();
 
-      const refresh_token = createRefreshToken({
-        id: newUser._id
-      });
-      res.cookie("refreshtoken", refresh_token, {
-        httpOnly: true,
-        path: "/api/v1/user/refresh_token",
-        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-      });
+//       const refresh_token = createRefreshToken({
+//         id: newUser._id
+//       });
+//       res.cookie("refreshtoken", refresh_token, {
+//         httpOnly: true,
+//         path: "/api/v1/user/refresh_token",
+//         maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+//       });
 
-      res.json({
-        msg: "Login success!"
-      });
-    }
-  } catch (err) {
-    return res.status(500).json({
-      msg: err.message
-    });
-  }
-};
+//       res.json({
+//         msg: "Login success!"
+//       });
+//     }
+//   } catch (err) {
+//     return res.status(500).json({
+//       msg: err.message
+//     });
+//   }
+// };
 // const facebookLogin = async (req, res) => {
 //     try {
 //         const {accessToken, userID} = req.body
@@ -573,7 +588,7 @@ module.exports = {
   updateUsersRole,
   deleteUser,
   activeDeletedUser,
-  googleLogin,
+  // googleLogin,
   // facebookLogin,
   userDeletionReason
 };
