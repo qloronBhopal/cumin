@@ -80,7 +80,6 @@ const userSchema = mongoose.Schema(
       type: Object,
       required: true,
       values: {
-        house_no: "",
         city: "",
         state: "",
         country: "",
