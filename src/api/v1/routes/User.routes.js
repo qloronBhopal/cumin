@@ -1,6 +1,6 @@
 const router = require("express").Router();
 const { userCtrl, uploadCtrl } = require("../controllers");
-const { auth, authAdmin, uploadImage } = require("../middlewares");
+const { auth, authAdmin, authSuperAdmin, authPanelUser, uploadImage } = require("../middlewares");
 
 router.post("/register", userCtrl.register);
 
@@ -16,7 +16,7 @@ router.post("/reset", auth, userCtrl.resetPassword);
 
 router.get("/infor", auth, userCtrl.getUserInfor);
 
-router.get("/all_infor", auth, authAdmin, userCtrl.getUsersAllInfor);
+router.get("/all_infor", auth, authPanelUser, userCtrl.getUsersAllInfor);
 
 router.get("/logout", userCtrl.logout);
 
@@ -24,7 +24,7 @@ router.patch("/update", auth, userCtrl.updateUser);
 
 router.patch("/update_role/:id", auth, authAdmin, userCtrl.updateUsersRole);
 
-router.post("/delete/:id", auth, authAdmin, userCtrl.deleteUser);
+router.post("/delete/:id", auth, authPanelUser, userCtrl.deleteUser);
 
 router.post("/activeDelUser/:id", auth, authAdmin, userCtrl.activeDeletedUser);
 

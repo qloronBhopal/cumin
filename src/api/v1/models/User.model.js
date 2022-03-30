@@ -3,10 +3,23 @@ const { userDefaultProfilePicUrl } = require("../../../../config/db_related_conf
 
 const userSchema = mongoose.Schema(
   {
-    name: {
+    firstName: {
       type: String,
-      required: [true, "Name: Required!"],
+      required: [true, "First Name Required!"],
       trim: true,
+      minLength: [3, "name: Min Length Required 3!"],
+      maxLength: [50, "name: Max Length Required 50!"]
+    },
+    lastName: {
+      type: String,
+      required: [true, "Last Name Required!"],
+      trim: true,
+      minLength: [3, "name: Min Length Required 3!"],
+      maxLength: [50, "name: Max Length Required 50!"]
+    },
+    employeeId: {
+      type: String,
+      required: [true, "Employeeid Required!"],
       minLength: [3, "name: Min Length Required 3!"],
       maxLength: [50, "name: Max Length Required 50!"]
     },
@@ -55,14 +68,14 @@ const userSchema = mongoose.Schema(
       maxLength: [700, "avatar: Max Length Required 700!"]
     },
     mobile_number: {
-      type: Number,
+      type: String,
       required: [true, "Mobile Number Is Required!"],
       minLength: [10, "Invalid Mobile Number!"],
       maxLength: [13, "Invalid Mobile Number!"],
       unique: true
     },
     whatsapp_number: {
-      type: Number,
+      type: String,
       required: false,
       minLength: [10, "Invalid Mobile Number!"],
       maxLength: [13, "Invalid Mobile Number!"],

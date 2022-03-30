@@ -44,6 +44,17 @@ function validateEmail(email) {
     /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
   return re.test(email);
 }
+
+function validateMobileNumber(number) {
+  if (
+    (number.slice(0, 3) === "+91" && number.length === 13) ||
+    (number.slice(0, 1) === "0" && number.length === 11) ||
+    number.length === 10
+  ) {
+    return true;
+  }
+  return false;
+}
 const createActivationToken = (payload) =>
   jwt.sign(payload, process.env.ACTIVATION_TOKEN_SECRET, {
     expiresIn: "5m"
@@ -59,7 +70,9 @@ const createRefreshToken = (payload) =>
 const register = async (req, res) => {
   try {
     const {
-      name,
+      firstName,
+      lastName,
+      employeeId,
       email,
       password,
       confirmPassword,
@@ -71,12 +84,31 @@ const register = async (req, res) => {
       reporting_to
     } = req.body;
 
-    if (!name || !email || !password || !mobile_number || !address || !confirmPassword) {
+    if (
+      !firstName ||
+      !lastName ||
+      !employeeId ||
+      !email ||
+      !password ||
+      !mobile_number ||
+      !address ||
+      !confirmPassword
+    ) {
       return res.status(400).json({
         msg: "Please fill in all fields."
       });
     }
     const WhatsAppNumber = whatsapp_number || mobile_number;
+    if (!validateMobileNumber(mobile_number)) {
+      return res.status(500).json({
+        msg: "invalid mobile number"
+      });
+    }
+    if (!validateMobileNumber(whatsapp_number)) {
+      return res.status(500).json({
+        msg: "invalid whatsapp number"
+      });
+    }
     const Role = role || 0;
     if (!validateEmail(email)) {
       return res.status(400).json({
@@ -107,7 +139,9 @@ const register = async (req, res) => {
     const passwordHash = await bcrypt.hash(password, 12);
 
     const newUser = {
-      name,
+      firstName,
+      lastName,
+      employeeId,
       email,
       password: passwordHash,
       mobile_number,
@@ -121,10 +155,11 @@ const register = async (req, res) => {
     const activation_token = createActivationToken(newUser);
 
     const url = `${CLIENT_URL}/user/activate/${activation_token}`;
-    sendMail(email, url, "Verify your email address");
+    // sendMail(email, url, "Verify your email address");
 
     res.json({
-      msg: "Register Success! Please activate your email to start."
+      msg: "Register Success! Please activate your email to start.",
+      token: activation_token
     });
   } catch (err) {
     return res.status(500).json({
@@ -137,8 +172,19 @@ const activateEmail = async (req, res) => {
     const { activation_token } = req.body;
 
     const user = jwt.verify(activation_token, process.env.ACTIVATION_TOKEN_SECRET);
-    const { name, email, password, role, mobile_number, whatsapp_number, office_location, address, reporting_to } =
-      user;
+    const {
+      firstName,
+      lastName,
+      employeeId,
+      email,
+      password,
+      role,
+      mobile_number,
+      whatsapp_number,
+      office_location,
+      address,
+      reporting_to
+    } = user;
 
     const check = await User.findOne({
       email
@@ -150,7 +196,9 @@ const activateEmail = async (req, res) => {
     }
 
     const newUser = new User({
-      name,
+      firstName,
+      lastName,
+      employeeId,
       email,
       password,
       mobile_number,
@@ -304,13 +352,24 @@ const getUsersAllInfor = async (req, res) => {
   const { pageNo } = req.query;
   const userIndex = (pageNo - 1) * 20;
   try {
-    const count = await User.find().count();
+    const count = await User.find({
+      role: {
+        $lt: req.user.role
+      }
+    }).count();
     if (userIndex > count) {
       return res.json({
         message: "No Data Available"
       });
     }
-    const users = await User.find().select("-password").limit(20).skip(userIndex);
+    const users = await User.find({
+      role: {
+        $lt: req.user.role
+      }
+    })
+      .select("-password")
+      .limit(20)
+      .skip(userIndex);
     res.json({
       message: `Displaying Document ${userIndex + 1} - ${userIndex + users.length} of ${count} `,
       users
@@ -360,6 +419,11 @@ const updateUser = async (req, res) => {
 const updateUsersRole = async (req, res) => {
   try {
     const { role } = req.body;
+    if (role >= req.user.role) {
+      return res.status(500).json({
+        msg: "Role Updattion Access Denied"
+      });
+    }
 
     await User.findOneAndUpdate(
       {

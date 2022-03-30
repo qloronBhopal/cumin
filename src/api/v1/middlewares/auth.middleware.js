@@ -27,18 +27,59 @@ const auth = (req, res, next) => {
   }
 };
 
+const authPanelUser = async (req, res, next) => {
+  try {
+    const user = await Users.findOne({
+      _id: req.user.id
+    });
+
+    if (user.role !== 1 && user.role !== 2 && user.role !== 3) {
+      return res.status(500).json({
+        msg: "Panel User access denied."
+      });
+    }
+    req.user.role = user.role;
+
+    next();
+  } catch (err) {
+    return res.status(500).json({
+      msg: err.message
+    });
+  }
+};
+
 const authAdmin = async (req, res, next) => {
   try {
     const user = await Users.findOne({
       _id: req.user.id
     });
 
-    if (user.role !== 1) {
+    if (user.role !== 2 && user.role !== 3) {
       return res.status(500).json({
         msg: "Admin resources access denied."
       });
     }
+    req.user.role = user.role;
+    next();
+  } catch (err) {
+    return res.status(500).json({
+      msg: err.message
+    });
+  }
+};
 
+const authSuperAdmin = async (req, res, next) => {
+  try {
+    const user = await Users.findOne({
+      _id: req.user.id
+    });
+
+    if (user.role !== 3) {
+      return res.status(500).json({
+        msg: "Super Admin resources access denied."
+      });
+    }
+    req.user.role = user.role;
     next();
   } catch (err) {
     return res.status(500).json({
@@ -49,5 +90,7 @@ const authAdmin = async (req, res, next) => {
 
 module.exports = {
   auth,
-  authAdmin
+  authAdmin,
+  authPanelUser,
+  authSuperAdmin
 };
